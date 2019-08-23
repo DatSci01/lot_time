@@ -81,6 +81,18 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs):
     # get draw date
     loc = data.find("Winning Numbers for")
     drawing_date = data[loc+20:loc+30]
+
+    date_recd = drawing_date[6:] + drawing_date[0:2] + drawing_date[3:5]
+    print (" Date received in YYYYMMDD format: "+ date_recd)
+    
+    #print(date_recd == "20190820")
+    req = 0
+    while date_recd != dr_date:
+        print ("Data not available, requery in 1 minute:")
+        req += 1
+        time.sleep(60)
+        data = str(Connect2Web(morp))   #urlopen reads byte data, cast to a string
+
     print ("\nDrawing results for: " + drawing_date)
 
     # get winning numbers
@@ -251,17 +263,17 @@ f.close()
 #print("Date of drawing to be checked (YYYYMMDD: ", end="")
 draw_date = input("\nDate of drawing to be checked (YYYYMMDD): ")
 timestr = input("\nTrigger time (HHMM): ")
-start_val = input("\nCheck results when available? (y/n) ")
-while start_val.lower() != "y" and start_val.lower() != "n":
-    start_val = input("\nCheck results when available? (y/n) ")
-if start_val.lower() == "y":
-    print("starting timer")
-    mydate = dt.datetime(int(draw_date[0:4]),\
+mydate = dt.datetime(int(draw_date[0:4]),\
     int(draw_date[4:6]),\
     int(draw_date[6:]),\
     int(timestr[0:2]),\
     int(timestr[2:]))
-    #print(mydate)
+#print(mydate)
+start_val = input("\nCheck for drawing results at " + str(mydate) + "? (y/n) ")
+while start_val.lower() != "y" and start_val.lower() != "n":
+    start_val = input("\nCheck for drawing results at " + mydate + "? (y/n) ")
+if start_val.lower() == "y":
+    
     print("Delaying until: ", mydate)
     delay = (mydate - dt.datetime.now()).total_seconds()
     th.Timer(delay, check_tickets,(draw_date, mega, mult, ticket_nums, letters)).start()
