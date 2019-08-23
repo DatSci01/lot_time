@@ -43,7 +43,7 @@ def check_bonus(t_num, win):
     else:
         return "X"
 
-def check_tickets(dr_date, morp, m_plier, t_nums, ltrs):
+def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn):
 
     #                         balls matched
     #           without bonusball       with bonusball
@@ -85,10 +85,11 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs):
     date_recd = drawing_date[6:] + drawing_date[0:2] + drawing_date[3:5]
     print (" Date received in YYYYMMDD format: "+ date_recd)
     
-    #print(date_recd == "20190820")
+    print("changeing date requested to 20190820")
+    dr_date = "20190820"
     req = 0
     while date_recd != dr_date:
-        print ("Data not available, requery in 1 minute:")
+        print (dr_date + " not available, requery in 1 minute:")
         req += 1
         time.sleep(60)
         data = str(Connect2Web(morp))   #urlopen reads byte data, cast to a string
@@ -162,8 +163,82 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs):
             str(match5).rjust(10) + \
             str(match_bonus).rjust(8) + \
             result.rjust(13))
+    if mega == 1:
+            save_name = drawing_date[-4:] + \
+                drawing_date[0:2] + drawing_date[3:5] + "mm_results.txt"
+    else:
+        save_name = drawing_date[-4:] + \
+            drawing_date[0:2] + drawing_date[3:5] + "pb_results.txt"
 
+    #############################################
+    # Save results
+    #############################################
 
+    if save_flag == "y":
+        if morp == 1:
+            save_name = dr_date[-4:] + \
+                dr_date[0:2] + dr_date[3:5] + "mm_results.txt"
+        else:
+            save_name = dr_date[-4:] + \
+                dr[0:2] + dr_date[3:5] + "pb_results.txt"
+        save_file = open(file_path + save_name, "w")
+        save_file.write("Lottery ticket results for: " + dr_date)
+        if morp == 1:
+            save_file.write("\n\nGame type: Mega Millions")
+        else:
+            save_file.write("\n\nGame type: Powerball")
+        save_file.write("\n\nTicket data file: " + afn)
+
+        save_file.write("\n\nTicket numbers in play:")
+        for i in range(len(t_nums)):
+            save_file.write("\nTicket " + ltrs[i % 10] + \
+                str(t_nums[i][0]).rjust(5) + \
+                str(t_nums[i][1]).rjust(5) + \
+                str(t_nums[i][2]).rjust(5) + \
+                str(t_nums[i][3]).rjust(5) + \
+                str(t_nums[i][4]).rjust(5) + \
+                str(t_nums[i][5]).rjust(5))
+
+        save_file.write("\n\nWinning numbers: " +\
+            str(winner[0]).rjust(4) + str(winner[1]).rjust(4) + \
+            str(winner[2]).rjust(4) +str(winner[3]).rjust(4) +\
+            str(winner[4]).rjust(4) +str(winner[5]).rjust(4))
+        save_file.write("\n\nMultiplier: " + str(m_plier))
+        save_file.write("\n\nRESULTS" + "First 5".rjust(41) + "Bonus".rjust(8) + "Pay Out".rjust(13))
+        for i in range(len(t_nums)):
+            match5 = 0
+            match_bonus = 0
+            for j in range(5):
+                temp = check_match(ticket_nums[i][j], winner)
+                if temp != "X":
+                    match5 += 1
+            temp = check_bonus(ticket_nums[i][5], winner)
+            if temp != "X":
+                match_bonus += 1
+            #result_int = pay_out[mega][match_bonus][match5] * multiplier
+            if m_plier:
+                result_int = pay_out[mega][match_bonus][match5] * multiplier
+            else:
+                result_int = pay_out[mega][match_bonus][match5]
+            if result_int < 0:
+                result = "Jackpot!"
+            else:
+                if result_int > 2000000:
+                    result = "{:,}".format(2000000)
+                else:
+                    result = "{:,}".format(result_int)
+            save_file.write("\nTicket " + ltrs[i % 10] + \
+                check_match(ticket_nums[i][0], winner).rjust(5) + \
+                check_match(ticket_nums[i][1], winner).rjust(5) + \
+                check_match(ticket_nums[i][2], winner).rjust(5) + \
+                check_match(ticket_nums[i][3], winner).rjust(5) + \
+                check_match(ticket_nums[i][4], winner).rjust(5) + \
+                check_bonus(ticket_nums[i][5], winner).rjust(5) + \
+                str(match5).rjust(10) + \
+                str(match_bonus).rjust(8) + \
+                result.rjust(13))
+        save_file.close()
+    
 
 
 
@@ -222,7 +297,6 @@ while not os.path.exists(actual_file_name):
 ####################################################################
 
 f = open(actual_file_name, "r")
-
 buffer_in = f.readline().split(" ")
 if buffer_in[0] == "mm":
     mega = 1
@@ -263,6 +337,9 @@ f.close()
 #print("Date of drawing to be checked (YYYYMMDD: ", end="")
 draw_date = input("\nDate of drawing to be checked (YYYYMMDD): ")
 timestr = input("\nTrigger time (HHMM): ")
+save_flag = input("\nSave results? (y/n)")
+while save_flag.lower() != "y" and save_flag.lower() != "n":
+    save_flag = input("\nSave results? (y/n)")
 mydate = dt.datetime(int(draw_date[0:4]),\
     int(draw_date[4:6]),\
     int(draw_date[6:]),\
@@ -276,4 +353,5 @@ if start_val.lower() == "y":
     
     print("Delaying until: ", mydate)
     delay = (mydate - dt.datetime.now()).total_seconds()
-    th.Timer(delay, check_tickets,(draw_date, mega, mult, ticket_nums, letters)).start()
+    th.Timer(delay, check_tickets,(draw_date, mega, mult, \
+        ticket_nums, letters, file_path, actual_file_name)).start()
