@@ -90,7 +90,9 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn):
     req = 0
     while date_recd != dr_date:
         print (dr_date + " not available, requery in 1 minute:")
-        data = ""
+        #data = None
+        #drawing_date = None
+        #date_recd = None
         req += 1
         if req > 60:
             cont = input("No new results in an hour. Continue? (y/n) ")
@@ -101,6 +103,9 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn):
                 return
         time.sleep(60)
         data = str(Connect2Web(morp))   #urlopen reads byte data, cast to a string
+        loc = data.find("Winning Numbers for")
+        drawing_date = data[loc+20:loc+30]
+        date_recd = drawing_date[6:] + drawing_date[0:2] + drawing_date[3:5]
         
 
     print ("\nDrawing results for: " + drawing_date)
