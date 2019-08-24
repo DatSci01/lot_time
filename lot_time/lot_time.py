@@ -90,9 +90,8 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn):
     req = 0
     while date_recd != dr_date:
         print (dr_date + " not available, requery in 1 minute:")
+        data = ""
         req += 1
-        time.sleep(60)
-        data = str(Connect2Web(morp))   #urlopen reads byte data, cast to a string
         if req > 60:
             cont = input("No new results in an hour. Continue? (y/n) ")
             if cont.lower() == "y":
@@ -100,6 +99,9 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn):
             else:
                 print ("No results found...ending.")
                 return
+        time.sleep(60)
+        data = str(Connect2Web(morp))   #urlopen reads byte data, cast to a string
+        
 
     print ("\nDrawing results for: " + drawing_date)
 
