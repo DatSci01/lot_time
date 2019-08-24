@@ -2,7 +2,7 @@ import os #needed for path and file existence checks
 import datetime as dt
 import threading as th
 import time
-
+import smtplib
 
 
 #############################
@@ -43,7 +43,24 @@ def check_bonus(t_num, win):
     else:
         return "X"
 
-def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn):
+def sendemail(from_addr, to_addr_list, cc_addr_list,
+              subject, message,
+              login, password,
+              smtpserver='smtp.gmail.com:587'):
+    header  = 'From: %s\n' % from_addr
+    header += 'To: %s\n' % ','.join(to_addr_list)
+    header += 'Cc: %s\n' % ','.join(cc_addr_list)
+    header += 'Subject: %s\n\n' % subject
+    message = header + message
+ 
+    server = smtplib.SMTP(smtpserver)
+    server.starttls()
+    server.login(login,password)
+    problems = server.sendmail(from_addr, to_addr_list, message)
+    server.quit()
+    return problems    
+
+def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn, sf, ef):
 
     #                         balls matched
     #           without bonusball       with bonusball
@@ -144,6 +161,7 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn):
 
     #print("length of ticket_nums: ", len(t_nums))
     print("\n\nRESULTS" + "First 5".rjust(35) + "Bonus".rjust(8) + "Pay Out".rjust(13))
+    total_payout = 0
     for i in range(len(t_nums)):
         match5 = 0
         match_bonus = 0
@@ -177,6 +195,11 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn):
             str(match5).rjust(10) + \
             str(match_bonus).rjust(8) + \
             result.rjust(13))
+        if result_int < 0:
+            total_payout += 500000000
+        else:
+            total_payout += result_int
+
     if mega == 1:
             save_name = drawing_date[-4:] + \
                 drawing_date[0:2] + drawing_date[3:5] + "mm_results.txt"
@@ -188,7 +211,7 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn):
     # Save results
     #############################################
 
-    if save_flag == "y":
+    if sf.lower() == "y":
         if morp == 1:
             #save_name = dr_date[-4:] + \
             #    dr_date[0:2] + dr_date[3:5] + "mm_results.txt"
@@ -254,8 +277,19 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn):
                 str(match_bonus).rjust(8) + \
                 result.rjust(13))
         save_file.close()
-    
 
+        if ef.lower() == "y":
+            if morp == 0:
+                email_msg = dr_date + ": PB won " + total_payout
+            else:
+                email_msg = dr_date + ": MM won $" + "{:,}".format(total_payout)
+            sendemail(from_addr    = 'BCottingham50@gmail.com', 
+                to_addr_list = ['2145514795@vtext.com','BCottingham50@gmail.com'],
+                cc_addr_list = [], 
+                subject      = 'Lottery results', 
+                message      = email_msg,
+                login        = 'BCottingham50@gmail.com', 
+                password     = 'xbqeihtwtpqedeph')
 
 
 
@@ -353,9 +387,12 @@ f.close()
 #print("Date of drawing to be checked (YYYYMMDD: ", end="")
 draw_date = input("\nDate of drawing to be checked (YYYYMMDD): ")
 timestr = input("\nTrigger time (HHMM): ")
-save_flag = input("\nSave results? (y/n)")
+save_flag = input("\nSave results? (y/n) ")
 while save_flag.lower() != "y" and save_flag.lower() != "n":
-    save_flag = input("\nSave results? (y/n)")
+    save_flag = input("\nSave results? (y/n) ")
+email_flag = input("\nEmail results? (y/n) ")
+while email_flag.lower() != "y" and email_flag.lower() != "n":
+    email_flag = input("\nEmail results? (y/n) ")
 mydate = dt.datetime(int(draw_date[0:4]),\
     int(draw_date[4:6]),\
     int(draw_date[6:]),\
@@ -370,4 +407,4 @@ if start_val.lower() == "y":
     print("Delaying until: ", mydate)
     delay = (mydate - dt.datetime.now()).total_seconds()
     th.Timer(delay, check_tickets,(draw_date, mega, mult, \
-        ticket_nums, letters, file_path, actual_file_name)).start()
+        ticket_nums, letters, file_path, actual_file_name, save_flag, email_flag)).start()
