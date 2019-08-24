@@ -33,11 +33,13 @@ def Connect2Web(g_type):
     return web_pg
 
 def check_match(t_num, win):
+    # this function checks if t_num is found within the first 5 items in list win
     if t_num in win[0:5]:
         return str(t_num)
     else:
         return "X"
 def check_bonus(t_num, win):
+    # this function checks if t_num is equal to the last item in list win
     if t_num == win[5]:
         return str(t_num)
     else:
@@ -47,6 +49,7 @@ def sendemail(from_addr, to_addr_list, cc_addr_list,
               subject, message,
               login, password,
               smtpserver='smtp.gmail.com:587'):
+    # this function sends an email through google gmail
     header  = 'From: %s\n' % from_addr
     header += 'To: %s\n' % ','.join(to_addr_list)
     header += 'Cc: %s\n' % ','.join(cc_addr_list)
@@ -61,10 +64,17 @@ def sendemail(from_addr, to_addr_list, cc_addr_list,
     return problems    
 
 def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn, sf, ef):
+    # this is the main function for the lottery ticket check. It gets the winning
+    # numbers and multiplier available from the web, then checks the lottery ticket
+    # numbers against the winning numbers and calculates the payout. It then
+    # displays the results, saves the results to a file (if selected) and
+    # sends an email with the total payout (if selected)
 
-    #                         balls matched
-    #           without bonusball       with bonusball
-    #           0,1,2,3,4,5 match       0,1,2,3,4,5 match
+    #                           PAYOUT TABLE
+    #         <-------------balls matched------------------>
+    #         ______________________________________________
+    #         | without bonusball    |   with bonusball    |
+    #         | 0,1,2,3,4,5 match    |   0,1,2,3,4,5 match |
     pay_out = [[[0,0,0,7,100,1000000],[4,4,7,100,50000,-1]],    #Powerball payout
               [[0,0,0,10,500,1000000],[2,4,10,200,10000,-1]]]   #Mega Millions payout 
 
@@ -100,16 +110,10 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn, sf, ef):
     drawing_date = data[loc+20:loc+30]
 
     date_recd = drawing_date[6:] + drawing_date[0:2] + drawing_date[3:5]
-    #print (" Date received in YYYYMMDD format: "+ date_recd)
     
-    #print("changing date requested to 20190820")
-    #dr_date = "20190820"
-    req = 0
+    req = 0         # counter for the number of website queries
     while date_recd != dr_date:
         print (dr_date + " not available, requery in 1 minute:")
-        #data = None
-        #drawing_date = None
-        #date_recd = None
         req += 1
         if req > 60:
             cont = input("No new results in an hour. Continue? (y/n) ")
@@ -118,10 +122,10 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn, sf, ef):
             else:
                 print ("No results found...ending.")
                 return
-        time.sleep(60)
+        time.sleep(60)  # wait 1 minute before requerying
         data = str(Connect2Web(morp))   #urlopen reads byte data, cast to a string
         loc = data.find("Winning Numbers for")
-        drawing_date = data[loc+20:loc+30]
+        drawing_date = data[loc+20:loc+30] # drawing date from web site
         date_recd = drawing_date[6:] + drawing_date[0:2] + drawing_date[3:5]
         
 
@@ -213,12 +217,8 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn, sf, ef):
 
     if sf.lower() == "y":
         if morp == 1:
-            #save_name = dr_date[-4:] + \
-            #    dr_date[0:2] + dr_date[3:5] + "mm_results.txt"
             save_name = dr_date + "mm_results.txt"
         else:
-            #save_name = dr_date[-4:] + \
-            #    dr[0:2] + dr_date[3:5] + "pb_results.txt"
             save_name = dr_date + "pb_results.txt"
         save_file = open(file_path + save_name, "w")
         save_file.write("Lottery ticket results for: " + dr_date)
@@ -254,16 +254,17 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn, sf, ef):
             temp = check_bonus(ticket_nums[i][5], winner)
             if temp != "X":
                 match_bonus += 1
-            #result_int = pay_out[mega][match_bonus][match5] * multiplier
-            if m_plier:
+            if m_plier: # only apply multiplier if in use 
                 result_int = pay_out[mega][match_bonus][match5] * multiplier
             else:
                 result_int = pay_out[mega][match_bonus][match5]
-            if result_int < 0:
+            if result_int < 0:  # Since jackpot amount is unknown
                 result = "Jackpot!"
-            else:
-                if result_int > 2000000:
+            else: #special case for 5 balls matched (no bonus) and multiplier
+                if result_int > 2000000 and mega == 0:
                     result = "{:,}".format(2000000)
+                elif result_int > 5000000 and mega == 1:
+                    result = "{:,}".format(5000000)
                 else:
                     result = "{:,}".format(result_int)
             save_file.write("\nTicket " + ltrs[i % 10] + \
@@ -278,6 +279,7 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn, sf, ef):
                 result.rjust(13))
         save_file.close()
 
+        # send text and email with total payout
         if ef.lower() == "y":
             if morp == 0:
                 email_msg = dr_date + ": PB won " + total_payout
@@ -307,7 +309,7 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn, sf, ef):
 
 # Declare lists for data
 ticket_nums = []                # List to store ticket data
-#match = []                      # List to show which ticket numbers matched
+#match = []                     # List to show which ticket numbers matched
                                 # 0 is no match, 1 is match
 buffer_list = [0,0,0,0,0,0]     # Temp buffer used in building ticket list
 letters = ["A","B","C","D","E","F","G","H","I","J"]
@@ -332,7 +334,6 @@ else:
     get_prompt = "Enter name of file (with full path) containing ticket data: "
 
 # Get user input of file name
-#print(get_prompt, end="")
 file_name = input(get_prompt)
 actual_file_name = build_file_name(file_path, file_name)
 
@@ -352,7 +353,7 @@ if buffer_in[0] == "mm":
     mega = 1
 else:
     mega = 0
-mult = bool(buffer_in[1])
+mult = bool(buffer_in[1]) # bool value, True if multiplier is in effect
 
 for line in f:
     buffer_in = line.split(" ")
@@ -360,10 +361,7 @@ for line in f:
         buffer_list[i] = int(buffer_in[i])
     ticket_nums.append([int(buffer_in[0]),int(buffer_in[1]),\
         int(buffer_in[2]),int(buffer_in[3]),int(buffer_in[4]),int(buffer_in[5])])
-    #match.append([0,0,0,0,0,0]) #add a corresponding row to match list as well
 print ("\nTicket numbers in play:")
-#for i in range(len(ticket_nums)):
-#    print (ticket_nums[i])
 for i in range(len(ticket_nums)):
     print(letters[i % 10] + ":" +\
         str(ticket_nums[i][0]).rjust(5) + \
@@ -384,7 +382,6 @@ f.close()
 # Get drawing date to be checked
 #######################################
 
-#print("Date of drawing to be checked (YYYYMMDD: ", end="")
 draw_date = input("\nDate of drawing to be checked (YYYYMMDD): ")
 timestr = input("\nTrigger time (HHMM): ")
 save_flag = input("\nSave results? (y/n) ")
@@ -398,13 +395,12 @@ mydate = dt.datetime(int(draw_date[0:4]),\
     int(draw_date[6:]),\
     int(timestr[0:2]),\
     int(timestr[2:]))
-#print(mydate)
 start_val = input("\nCheck for drawing results at " + str(mydate) + "? (y/n) ")
 while start_val.lower() != "y" and start_val.lower() != "n":
     start_val = input("\nCheck for drawing results at " + mydate + "? (y/n) ")
 if start_val.lower() == "y":
     
-    print("Delaying until: ", mydate)
+    print("Waiting...")
     delay = (mydate - dt.datetime.now()).total_seconds()
     th.Timer(delay, check_tickets,(draw_date, mega, mult, \
         ticket_nums, letters, file_path, actual_file_name, save_flag, email_flag)).start()
