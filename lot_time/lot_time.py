@@ -176,11 +176,13 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn):
 
     if save_flag == "y":
         if morp == 1:
-            save_name = dr_date[-4:] + \
-                dr_date[0:2] + dr_date[3:5] + "mm_results.txt"
+            #save_name = dr_date[-4:] + \
+            #    dr_date[0:2] + dr_date[3:5] + "mm_results.txt"
+            save_name = dr_date + "mm_results.txt"
         else:
-            save_name = dr_date[-4:] + \
-                dr[0:2] + dr_date[3:5] + "pb_results.txt"
+            #save_name = dr_date[-4:] + \
+            #    dr[0:2] + dr_date[3:5] + "pb_results.txt"
+            save_name = dr_date + "pb_results.txt"
         save_file = open(file_path + save_name, "w")
         save_file.write("Lottery ticket results for: " + dr_date)
         if morp == 1:
