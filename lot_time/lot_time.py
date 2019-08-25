@@ -238,12 +238,17 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn, sf, ef):
                 str(t_nums[i][4]).rjust(5) + \
                 str(t_nums[i][5]).rjust(5))
 
+        save_file.write("\n\nMultiplier: " + str(m_plier))
+
+        save_file.write("\n\nDRAWING RESULTS")
         save_file.write("\n\nWinning numbers: " +\
             str(winner[0]).rjust(4) + str(winner[1]).rjust(4) + \
             str(winner[2]).rjust(4) +str(winner[3]).rjust(4) +\
             str(winner[4]).rjust(4) +str(winner[5]).rjust(4))
-        save_file.write("\n\nMultiplier: " + str(m_plier))
-        save_file.write("\n\nRESULTS" + "First 5".rjust(41) + "Bonus".rjust(8) + "Pay Out".rjust(13))
+
+        save_file.write("\nMultiplier: " + str(multiplier))
+        
+        save_file.write("\n\n" + "First 5".rjust(48) + "Bonus".rjust(8) + "Pay Out".rjust(13))
         for i in range(len(t_nums)):
             match5 = 0
             match_bonus = 0
