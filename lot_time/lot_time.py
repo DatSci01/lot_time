@@ -282,7 +282,7 @@ def check_tickets(dr_date, morp, m_plier, t_nums, ltrs, f_path, afn, sf, ef):
         # send text and email with total payout
         if ef.lower() == "y":
             if morp == 0:
-                email_msg = dr_date + ": PB won " + total_payout
+                email_msg = dr_date + ": PB won " + "{:,}".format(total_payout)
             else:
                 email_msg = dr_date + ": MM won $" + "{:,}".format(total_payout)
             sendemail(from_addr    = 'BCottingham50@gmail.com', 
